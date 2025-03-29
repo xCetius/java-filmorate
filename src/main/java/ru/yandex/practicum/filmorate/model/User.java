@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Data
@@ -27,17 +29,8 @@ public class User {
     @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthday;
+    private Set<Long> friends = new HashSet<>();
 
-    public void validateUser() throws ValidationException {
-        if (this.name == null || this.name.isEmpty() || this.name.isBlank()) {
-            this.name = this.login;
-            log.info("User name not provided, using login as name: {}", this.name);
-        }
 
-        if (this.birthday.isAfter(LocalDate.now())) {
-            String errorMessage = "User birthday must be before current date";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
+
 }

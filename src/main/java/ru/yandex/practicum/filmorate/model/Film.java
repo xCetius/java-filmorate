@@ -15,6 +15,8 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Data
@@ -32,29 +34,7 @@ public class Film {
     @JsonSerialize(using = DurationToMinutesSerializer.class)
     @JsonDeserialize(using = MinutesToDurationDeserializer.class)
     private Duration duration;
+    private Set<Long> likes = new HashSet<>();
 
-    public void validateFilm() {
-        log.debug("Starting validation for film: {}", this.name);
-
-        if (this.description.length() > 200) {
-            String errorMessage = "Film description must be less than 200 symbols";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
-        if (this.duration.getSeconds() <= 0) {
-            String errorMessage = "Film duration must be positive";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
-        if (this.releaseDate.isBefore(LocalDate.of(1895, 12, 28))) {
-            String errorMessage = "Film release date must not be before 1895-12-28";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
-        log.info("Film validation successful: {}", this.name);
-    }
 
 }
