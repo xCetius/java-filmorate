@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,7 +30,11 @@ public class FilmService {
 
     public void addLike(long filmId, long userId) throws ValidationException {
         Film film = filmStorage.getFilm(filmId);
-        userStorage.getUser(userId);
+        User user = userStorage.getUser(userId);
+        if (user == null) {
+            log.error("User with id {} not found", userId);
+            throw new NotFoundException("User with id " + userId + " not found");
+        }
         if (film.getLikes().add(userId)) {
             log.info("Film with id {} liked by user with id {}", filmId, userId);
         } else {

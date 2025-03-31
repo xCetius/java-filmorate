@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 
 import java.util.List;
@@ -40,7 +39,7 @@ public class FilmController {
 
     @GetMapping
     public List<Film> getFilms() {
-        return  filmStorage.getFilms();
+        return filmStorage.getFilms();
     }
 
     @GetMapping("/{id}")
@@ -59,12 +58,12 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable("id") long id, @PathVariable("userId") long userId)  {
+    public void addLike(@PathVariable("id") long id, @PathVariable("userId") long userId) {
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable("id") long id, @PathVariable("userId") long userId)  {
+    public void removeLike(@PathVariable("id") long id, @PathVariable("userId") long userId) {
         filmService.removeLike(id, userId);
     }
 

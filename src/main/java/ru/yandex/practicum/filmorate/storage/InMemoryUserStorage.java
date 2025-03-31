@@ -1,12 +1,11 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
+
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -75,6 +74,7 @@ public class InMemoryUserStorage implements UserStorage {
 
         if (userName == null || userName.isEmpty() || userName.isBlank()) {
             userName = user.getLogin();
+            user.setName(userName);
             log.info("User name not provided, using login as name: {}", userName);
         }
 

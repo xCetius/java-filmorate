@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,11 +9,18 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.Duration;
 import java.time.LocalDate;
 
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,6 +35,16 @@ class FilmControllerTest {
     private ObjectMapper objectMapper;
 
     private Film validFilm;
+    private User validUser;
+
+    @Autowired
+    private FilmStorage filmStorage;
+
+    @Autowired
+    private FilmService filmService;
+
+    @Autowired
+    private UserStorage userStorage;
 
     @BeforeEach
     void setUp() {
@@ -35,6 +53,12 @@ class FilmControllerTest {
         validFilm.setDescription("This is a test film");
         validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         validFilm.setDuration(Duration.ofMinutes(120));
+
+        validUser = new User();
+        validUser.setName("Test User");
+        validUser.setLogin("testuser");
+        validUser.setEmail("test@example.com");
+        validUser.setBirthday(LocalDate.of(2000, 1, 1));
     }
 
     @Test
@@ -113,4 +137,96 @@ class FilmControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void testAddLike() throws Exception {
+        userStorage.addUser(validUser);
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/films/1/like/1"))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void testAddLikeWithInvalidFilmId() throws Exception {
+        mockMvc.perform(put("/films/999/like/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testAddLikeWithInvalidUserId() throws Exception {
+        mockMvc.perform(put("/films/1/like/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testRemoveLike() throws Exception {
+        userStorage.addUser(validUser);
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/films/1/like/1"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/films/1/like/1"))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void testRemoveLikeWithNoLike() throws Exception {
+        userStorage.addUser(validUser);
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/films/1/like/1"))
+                .andExpect(status().isNotFound());
+
+    }
+
+    @Test
+    void testReturnTopFilms() throws Exception {
+        mockMvc.perform(get("/films"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getPopularFilms_WhenSizeIsZero_ShouldThrowValidationException() {
+        // Проверяем, что при size <= 0 выбрасывается исключение
+        assertThrows(ValidationException.class, () -> filmService.getPopularFilms(0));
+        assertThrows(ValidationException.class, () -> filmService.getPopularFilms(-1));
+    }
+
+    @Test
+    void getPopularFilms_ShouldReturnFilms() throws Exception {
+        int size = 5;
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk());
+
+
+        mockMvc.perform(get("/films/popular").param("size", String.valueOf(size)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        mockMvc.perform(get("/films/popular").param("size", String.valueOf(-1)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/films/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+    }
 }

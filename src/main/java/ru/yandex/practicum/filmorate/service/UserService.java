@@ -5,12 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +21,6 @@ public class UserService {
     public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
-
 
 
     public void addFriend(long userId, long friendId) throws ValidationException {
@@ -85,11 +81,12 @@ public class UserService {
         if (userFriends.isEmpty() || friendFriends.isEmpty()) {
             log.info("User with id {} and friend with id {} have no common friends", userId, friendId);
 
-        } else if (userFriends.retainAll(friendFriends)) {
+        } else {
+            userFriends.retainAll(friendFriends);
             log.info("User with id {} and friend with id {} have {} common friends", userId, friendId, userFriends.size());
             userFriends.stream().map(userStorage::getUser).forEach(commonFriends::add);
         }
-       return commonFriends;
+        return commonFriends;
     }
 
 
