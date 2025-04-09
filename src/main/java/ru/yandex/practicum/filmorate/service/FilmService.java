@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -11,22 +11,18 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.userStorage = userStorage;
-        this.filmStorage = filmStorage;
-    }
 
     public void addLike(long filmId, long userId) throws ValidationException {
         Film film = filmStorage.getFilm(filmId);
@@ -72,6 +68,30 @@ public class FilmService {
 
         return popularFilms;
 
+    }
+
+    public void validateFilm(Film film) {
+        log.debug("Starting validation for film: {}", film.getName());
+
+        if (film.getDescription().length() > 200) {
+            String errorMessage = "Film description must be less than 200 symbols";
+            log.error("Validation failed: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
+
+        if (film.getDuration().getSeconds() <= 0) {
+            String errorMessage = "Film duration must be positive";
+            log.error("Validation failed: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
+
+        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+            String errorMessage = "Film release date must not be before 1895-12-28";
+            log.error("Validation failed: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
+
+        log.info("Film validation successful: {}", film.getName());
     }
 
 

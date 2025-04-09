@@ -30,4 +30,12 @@ public class ErrorHandler {
                 "description", e.getMessage());
 
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleRuntimeException(final RuntimeException e) {
+        return Map.of("error", "Runtime error.",
+                "description", e.getMessage());
+
+    }
 }

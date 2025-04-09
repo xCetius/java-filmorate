@@ -1,34 +1,31 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
-    }
 
 
     public void addFriend(long userId, long friendId) throws ValidationException {
         User user = userStorage.getUser(userId);
         User friend = userStorage.getUser(friendId);
 
-        userStorage.validateUser(user);
-        userStorage.validateUser(friend);
+        validateUser(user);
+        validateUser(friend);
 
         if (user.getFriends().add(friendId)) {
             friend.getFriends().add(userId);
@@ -44,8 +41,8 @@ public class UserService {
         User user = userStorage.getUser(userId);
         User friend = userStorage.getUser(friendId);
 
-        userStorage.validateUser(user);
-        userStorage.validateUser(friend);
+        validateUser(user);
+        validateUser(friend);
 
         if (user.getFriends().remove(friendId)) {
             log.info("Friend with id {} removed from user with id {}", friendId, userId);
@@ -57,7 +54,7 @@ public class UserService {
 
     public List<User> getFriends(long userId) throws ValidationException {
         User user = userStorage.getUser(userId);
-        userStorage.validateUser(user);
+        validateUser(user);
 
         List<User> friends = new ArrayList<>(user.getFriends().size());
         for (Long friendId : user.getFriends()) {
@@ -72,8 +69,8 @@ public class UserService {
         User user = userStorage.getUser(userId);
         User friend = userStorage.getUser(friendId);
 
-        userStorage.validateUser(user);
-        userStorage.validateUser(friend);
+        validateUser(user);
+        validateUser(friend);
 
         Set<Long> userFriends = user.getFriends();
         Set<Long> friendFriends = friend.getFriends();
@@ -87,6 +84,23 @@ public class UserService {
             userFriends.stream().map(userStorage::getUser).forEach(commonFriends::add);
         }
         return commonFriends;
+    }
+
+
+    public void validateUser(User user) throws ValidationException {
+        String userName = user.getName();
+
+        if (userName == null || userName.isEmpty() || userName.isBlank()) {
+            userName = user.getLogin();
+            user.setName(userName);
+            log.info("User name not provided, using login as name: {}", userName);
+        }
+
+        if (user.getBirthday().isAfter(LocalDate.now())) {
+            String errorMessage = "User birthday must be before current date";
+            log.error("Validation failed: {}", errorMessage);
+            throw new ValidationException(errorMessage);
+        }
     }
 
 

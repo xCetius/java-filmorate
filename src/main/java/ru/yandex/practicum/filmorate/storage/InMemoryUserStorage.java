@@ -1,19 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Repository
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
 
@@ -38,7 +36,6 @@ public class InMemoryUserStorage implements UserStorage {
     public User addUser(User user) {
         long id = getNextUserId();
         user.setId(id);
-        validateUser(user);
         users.put(id, user);
         log.info("User with id {} added", id);
         return user;
@@ -51,7 +48,7 @@ public class InMemoryUserStorage implements UserStorage {
             log.error("Cannot update user: {}", errorMessage);
             throw new NotFoundException(errorMessage);
         }
-        validateUser(user);
+
         users.put(user.getId(), user);
         log.info("User with id {} updated", user.getId());
         return user;
@@ -68,20 +65,5 @@ public class InMemoryUserStorage implements UserStorage {
         return ++currentMaxId;
     }
 
-    @Override
-    public void validateUser(User user) throws ValidationException {
-        String userName = user.getName();
 
-        if (userName == null || userName.isEmpty() || userName.isBlank()) {
-            userName = user.getLogin();
-            user.setName(userName);
-            log.info("User name not provided, using login as name: {}", userName);
-        }
-
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            String errorMessage = "User birthday must be before current date";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-    }
 }

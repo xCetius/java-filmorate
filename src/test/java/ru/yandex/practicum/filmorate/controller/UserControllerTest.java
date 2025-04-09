@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -90,7 +91,7 @@ class UserControllerTest {
         user.setLogin("testLogin2");
         user.setBirthday(LocalDate.now().plusDays(1)); // Дата в будущем
 
-        Assertions.assertThrows(ValidationException.class, () -> userStorage.addUser(user));
+        Assertions.assertThrows(ValidationException.class, () -> userService.validateUser(user));
 
     }
 
@@ -148,6 +149,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.name").value("testLogin6"));
     }
 
+    @DisplayName("Add 2 users and make them friends")
     @Test
     void addFriend_ShouldReturnOk() throws Exception {
 

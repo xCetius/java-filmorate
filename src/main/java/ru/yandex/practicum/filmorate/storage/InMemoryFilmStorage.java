@@ -1,18 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.time.LocalDate;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Repository
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
 
@@ -37,7 +36,6 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film addFilm(Film film) {
         long id = getNextFilmId();
         film.setId(id);
-        validateFilm(film);
         films.put(id, film);
         log.info("Film with id {} added", id);
         return film;
@@ -50,7 +48,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             log.error("Cannot update film: {}", errorMessage);
             throw new NotFoundException(errorMessage);
         }
-        validateFilm(film);
+
         films.put(film.getId(), film);
         log.info("Film with id {} updated", film.getId());
         return film;
@@ -66,27 +64,5 @@ public class InMemoryFilmStorage implements FilmStorage {
         return ++currentMaxId;
     }
 
-    public void validateFilm(Film film) {
-        log.debug("Starting validation for film: {}", film.getName());
 
-        if (film.getDescription().length() > 200) {
-            String errorMessage = "Film description must be less than 200 symbols";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
-        if (film.getDuration().getSeconds() <= 0) {
-            String errorMessage = "Film duration must be positive";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            String errorMessage = "Film release date must not be before 1895-12-28";
-            log.error("Validation failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
-
-        log.info("Film validation successful: {}", film.getName());
-    }
 }

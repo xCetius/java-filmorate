@@ -1,11 +1,9 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
 
-@Component
 public interface FilmStorage {
 
     List<Film> getFilms();
@@ -18,5 +16,4 @@ public interface FilmStorage {
 
     long getNextFilmId();
 
-    void validateFilm(Film film);
 }
