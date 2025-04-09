@@ -1,13 +1,24 @@
 package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class UserTest {
+
+    @Autowired
+    private UserStorage userStorage;
+
+    @Autowired
+    private UserService userService;
 
     @Test
     void testValidateUserWithValidData() {
@@ -17,7 +28,7 @@ class UserTest {
         user.setBirthday(LocalDate.of(2000, 1, 1));
 
         // Проверка, что валидация проходит без ошибок
-        assertDoesNotThrow(user::validateUser);
+        assertDoesNotThrow(() -> userService.validateUser(user));
 
         // Проверка, что имя заменяется логином, если оно пустое
         assertEquals("testLogin", user.getName());
@@ -31,7 +42,7 @@ class UserTest {
         user.setBirthday(LocalDate.of(2000, 1, 1));
 
         // Имя не задано, должно быть заменено логином
-        user.validateUser();
+        userService.validateUser(user);
         assertEquals("testLogin", user.getName());
     }
 
@@ -43,7 +54,7 @@ class UserTest {
         user.setBirthday(LocalDate.now().plusDays(1)); // Дата рождения в будущем
 
         // Проверка, что валидация выбрасывает исключение
-        ValidationException exception = assertThrows(ValidationException.class, user::validateUser);
+        ValidationException exception = assertThrows(ValidationException.class, () -> userService.validateUser(user));
         assertEquals("User birthday must be before current date", exception.getMessage());
     }
 
@@ -55,7 +66,7 @@ class UserTest {
         user.setLogin("testLogin");
 
 
-        assertThrows(NullPointerException.class, user::validateUser);
+        assertThrows(NullPointerException.class, () -> userService.validateUser(user));
     }
 
     @Test

@@ -1,65 +1,74 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
 @Slf4j
+@RequiredArgsConstructor
 public class UserController {
 
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserStorage userStorage;
+    private final UserService userService;
+
 
     @GetMapping
     public List<User> getUsers() {
-        return new ArrayList<>(users.values());
+        return userStorage.getUsers();
+    }
+
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable("id") long id) {
+        return userStorage.getUser(id);
     }
 
     @PostMapping
     public User addUser(@Valid @RequestBody User user) {
-        long id = getNextUserId();
-        user.setId(id);
-        user.validateUser();
-        users.put(id, user);
-        log.info("User with id {} added", id);
-        return user;
+        userService.validateUser(user);
+        return userStorage.addUser(user);
     }
 
     @PutMapping()
     public User updateUser(@Valid @RequestBody User user) {
-        if (!users.containsKey(user.getId())) {
-            String errorMessage = "User with id " + user.getId() + " not found";
-            log.error("Cannot update user: {}", errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
-        user.validateUser();
-        users.put(user.getId(), user);
-        log.info("User with id {} updated", user.getId());
-        return user;
+        userService.validateUser(user);
+        return userStorage.updateUser(user);
     }
 
-    private long getNextUserId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable("id") long id, @PathVariable("friendId") long friendId) {
+        userService.addFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable("id") long id) {
+        return userService.getFriends(id);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFriend(@PathVariable("id") long id, @PathVariable("friendId") long friendId) {
+        userService.removeFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> showCommonFriends(@PathVariable("id") long id, @PathVariable("otherId") long otherId) {
+        return userService.showCommonFriends(id, otherId);
     }
 
 

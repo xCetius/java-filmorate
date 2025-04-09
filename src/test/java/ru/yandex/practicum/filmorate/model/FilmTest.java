@@ -1,14 +1,28 @@
 package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.Duration;
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+
+@SpringBootTest
 class FilmTest {
+
+    @Autowired
+    private FilmStorage filmStorage;
+    @Autowired
+    private FilmService filmService;
+
 
     @Test
     void testValidateFilmWithValidData() {
@@ -19,7 +33,7 @@ class FilmTest {
         film.setDuration(Duration.ofMinutes(120));
 
         // Проверка, что валидация проходит без ошибок
-        assertDoesNotThrow(film::validateFilm);
+        assertDoesNotThrow(() -> filmService.validateFilm(film));
     }
 
     @Test
@@ -33,7 +47,7 @@ class FilmTest {
         film.setDuration(Duration.ofMinutes(120));
 
         // Проверка, что валидация выбрасывает исключение
-        ValidationException exception = assertThrows(ValidationException.class, film::validateFilm);
+        ValidationException exception = assertThrows(ValidationException.class, () -> filmService.validateFilm(film));
         assertEquals("Film description must be less than 200 symbols", exception.getMessage());
     }
 
@@ -46,7 +60,7 @@ class FilmTest {
         film.setDuration(Duration.ofMinutes(-100)); // Отрицательная длительность
 
         // Проверка, что валидация выбрасывает исключение
-        ValidationException exception = assertThrows(ValidationException.class, film::validateFilm);
+        ValidationException exception = assertThrows(ValidationException.class, () -> filmService.validateFilm(film));
         assertEquals("Film duration must be positive", exception.getMessage());
     }
 
@@ -59,7 +73,7 @@ class FilmTest {
         film.setDuration(Duration.ofMinutes(0)); // Нулевая длительность
 
         // Проверка, что валидация выбрасывает исключение
-        ValidationException exception = assertThrows(ValidationException.class, film::validateFilm);
+        ValidationException exception = assertThrows(ValidationException.class, () -> filmService.validateFilm(film));
         assertEquals("Film duration must be positive", exception.getMessage());
     }
 
@@ -72,7 +86,7 @@ class FilmTest {
         film.setDuration(Duration.ofMinutes(120));
 
         // Проверка, что валидация выбрасывает исключение
-        ValidationException exception = assertThrows(ValidationException.class, film::validateFilm);
+        ValidationException exception = assertThrows(ValidationException.class, () -> filmService.validateFilm(film));
         assertEquals("Film release date must not be before 1895-12-28", exception.getMessage());
     }
 
@@ -85,7 +99,7 @@ class FilmTest {
         film.setDuration(Duration.ofMinutes(120));
 
         // Проверка, что валидация проходит без ошибок
-        assertDoesNotThrow(film::validateFilm);
+        assertDoesNotThrow(() -> filmService.validateFilm(film));
     }
 
     @Test
