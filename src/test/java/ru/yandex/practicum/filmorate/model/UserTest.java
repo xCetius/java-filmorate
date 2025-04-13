@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserTest {
 
     @Autowired
+    @Qualifier("inMemoryUserStorage")
     private UserStorage userStorage;
 
     @Autowired

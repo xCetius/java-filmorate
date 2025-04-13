@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Repository
+@Repository("inMemoryFilmStorage")
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
 
@@ -55,6 +56,28 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
+    public void addLike(long filmId, long userId) {
+        Film film = getFilm(filmId);
+
+        if (film.getLikes().add(userId)) {
+            log.info("Film with id {} liked by user with id {}", filmId, userId);
+        } else {
+            log.info("Film with id {} already liked by user with id {}", filmId, userId);
+            throw new ValidationException("Film with id " + filmId + " already liked by user with id " + userId);
+        }
+    }
+
+    @Override
+    public void removeLike(long filmId, long userId) {
+        Film film = getFilm(filmId);
+        if (film.getLikes().remove(userId)) {
+            log.info("Film with id {} unliked by user with id {}", filmId, userId);
+        } else {
+            log.info("Cannot remove like from film with id {}. Film was not liked by user with id {}", filmId, userId);
+            throw new NotFoundException("Film was not liked by user with id " + userId);
+        }
+    }
+
     public long getNextFilmId() {
         long currentMaxId = films.keySet()
                 .stream()

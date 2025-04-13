@@ -1,8 +1,10 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -14,10 +16,36 @@ import java.util.Set;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
+    @Autowired
+    public UserService(@Qualifier("UserDbStorage") UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
+
     private final UserStorage userStorage;
+
+    public List<User> getUsers() {
+        return userStorage.getUsers();
+    }
+
+    public User getUser(long id) {
+        return userStorage.getUser(id);
+    }
+
+    public User addUser(User user) {
+        validateUser(user);
+        return userStorage.addUser(user);
+    }
+
+    public User updateUser(User user) {
+        validateUser(user);
+        if (userStorage.getUser(user.getId()) == null) {
+            log.info("User with id {} not found", user.getId());
+            throw new NotFoundException("User with id " + user.getId() + " not found");
+        }
+        return userStorage.updateUser(user);
+    }
 
 
     public void addFriend(long userId, long friendId) throws ValidationException {
@@ -27,14 +55,12 @@ public class UserService {
         validateUser(user);
         validateUser(friend);
 
-        if (user.getFriends().add(friendId)) {
-            friend.getFriends().add(userId);
-            log.info("Friend with id {} added to user with id {}", friendId, userId);
-        } else {
-            log.info("Friend with id {} already exists in user with id {}", friendId, userId);
+        if (user.getFriends().contains(friendId)) {
+            log.info("User with id {} already has friend with id {}", userId, friendId);
+            throw new ValidationException("User with id " + userId + " already has friend with id " + friendId);
         }
 
-
+        userStorage.addFriend(userId, friendId);
     }
 
     public void removeFriend(long userId, long friendId) throws ValidationException {
@@ -44,12 +70,9 @@ public class UserService {
         validateUser(user);
         validateUser(friend);
 
-        if (user.getFriends().remove(friendId)) {
-            log.info("Friend with id {} removed from user with id {}", friendId, userId);
-            friend.getFriends().remove(userId);
-        } else {
-            log.info("Friend with id {} not found in user with id {}", friendId, userId);
-        }
+        userStorage.removeFriend(userId, friendId);
+
+
     }
 
     public List<User> getFriends(long userId) throws ValidationException {

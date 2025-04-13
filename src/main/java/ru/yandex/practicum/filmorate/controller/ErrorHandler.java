@@ -32,7 +32,7 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, String> handleRuntimeException(final RuntimeException e) {
         return Map.of("error", "Runtime error.",
                 "description", e.getMessage());

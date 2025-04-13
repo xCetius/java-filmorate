@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Repository
+@Repository("inMemoryUserStorage")
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
 
@@ -56,6 +56,29 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
+    public void addFriend(long userId, long friendId) {
+        User user = users.get(userId);
+        User friend = users.get(friendId);
+        user.getFriends().add(friendId);
+
+        log.info("Friend with id {} added to user with id {}", friendId, userId);
+
+    }
+
+    @Override
+    public void removeFriend(long userId, long friendId) {
+
+        User user = users.get(userId);
+
+        if (user.getFriends().remove(friendId)) {
+            log.info("Friend with id {} removed from user with id {}", friendId, userId);
+
+        } else {
+            log.info("Friend with id {} not found in user with id {}", friendId, userId);
+        }
+    }
+
+
     public long getNextUserId() {
         long currentMaxId = users.keySet()
                 .stream()
