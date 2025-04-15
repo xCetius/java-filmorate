@@ -19,12 +19,12 @@ public class GenreController {
 
     @GetMapping
     public List<Genre> getGenres() {
-        return genreStorage.getGenres();
+        return genreStorage.findAll();
     }
 
     @GetMapping("/{id}")
     public Genre getGenre(@PathVariable("id") long id) {
-        return genreStorage.getGenre(id);
+        return genreStorage.findById(id);
     }
 
 

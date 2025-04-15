@@ -18,12 +18,12 @@ public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
 
     @Override
-    public List<User> getUsers() {
+    public List<User> findAll() {
         return new ArrayList<>(users.values());
     }
 
     @Override
-    public User getUser(long id) {
+    public User findById(long id) {
         if (!users.containsKey(id)) {
             String errorMessage = "User with id " + id + " not found";
             log.error("Cannot get user: {}", errorMessage);

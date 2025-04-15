@@ -99,6 +99,7 @@ class FilmTest {
         film.setDescription("This is a test film");
         film.setReleaseDate(LocalDate.of(1895, 12, 28)); // Граничная дата
         film.setDuration(Duration.ofMinutes(120));
+        film.
 
         // Проверка, что валидация проходит без ошибок
         assertDoesNotThrow(() -> filmService.validateFilm(film));

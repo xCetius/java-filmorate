@@ -20,7 +20,7 @@ public class RatingDbStorage implements RatingStorage {
     private final RatingRowMapper ratingRowMapper;
 
     @Override
-    public Rating getRating(long id) {
+    public Rating findById(long id) {
         String sql = "SELECT * FROM ratings WHERE rating_id = ?;";
         try {
             return jdbcTemplate.queryForObject(sql, ratingRowMapper, id);
@@ -33,7 +33,7 @@ public class RatingDbStorage implements RatingStorage {
     }
 
     @Override
-    public List<Rating> getRatings() {
+    public List<Rating> findAll() {
         String sql = "SELECT * FROM ratings;";
         return jdbcTemplate.query(sql, ratingRowMapper);
     }

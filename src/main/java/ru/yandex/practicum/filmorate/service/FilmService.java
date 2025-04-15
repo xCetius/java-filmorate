@@ -17,8 +17,6 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,8 +35,8 @@ public class FilmService {
     }
 
     public void addLike(long filmId, long userId) throws ValidationException {
-        Film film = filmStorage.getFilm(filmId);
-        User user = userStorage.getUser(userId);
+        Film film = filmStorage.findById(filmId);
+        User user = userStorage.findById(userId);
         if (user == null) {
             log.error("User with id {} not found", userId);
             throw new NotFoundException("User with id " + userId + " not found");
@@ -54,8 +52,8 @@ public class FilmService {
     }
 
     public void removeLike(long filmId, long userId) throws ValidationException {
-        Film film = filmStorage.getFilm(filmId);
-        User user = userStorage.getUser(userId);
+        Film film = filmStorage.findById(filmId);
+        User user = userStorage.findById(userId);
         if (user == null) {
             log.error("User with id {} not found", userId);
             throw new NotFoundException("User with id " + userId + " not found");
@@ -75,7 +73,7 @@ public class FilmService {
             throw new ValidationException("Size must be greater than 0");
         }
 
-        List<Film> allFilms = filmStorage.getFilms();
+        List<Film> allFilms = filmStorage.findAll();
 
         List<Film> sortedFilms = allFilms.stream()
                 .filter(film -> !film.getLikes().isEmpty())
@@ -115,7 +113,7 @@ public class FilmService {
         }
 
         //Проверка на наличие рейтинга в базе
-        List<Long> possibleRatings = ratingStorage.getRatings().stream().map(Rating::getId).toList();
+        List<Long> possibleRatings = ratingStorage.findAll().stream().map(Rating::getId).toList();
         Long ratingId = film.getMpa().getId();
 
         if (!possibleRatings.contains(ratingId)) {
@@ -129,11 +127,11 @@ public class FilmService {
     }
 
     public List<Film> getFilms() {
-        return filmStorage.getFilms();
+        return filmStorage.findAll();
     }
 
     public Film getFilm(long id) {
-        return filmStorage.getFilm(id);
+        return filmStorage.findById(id);
     }
 
     public Film addFilm(Film film) {

@@ -29,7 +29,7 @@ public class UserDbStorage implements UserStorage {
 
 
     @Override
-    public List<User> getUsers() {
+    public List<User> findAll() {
         String sql = """
                 SELECT u.*,
                 GROUP_CONCAT(f.friend_id) AS friends,
@@ -47,7 +47,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User getUser(long id) {
+    public User findById(long id) {
         String sql = """
                 SELECT u.*,
                 GROUP_CONCAT(f.friend_id) AS friends,

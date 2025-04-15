@@ -19,12 +19,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
 
     @Override
-    public List<Film> getFilms() {
+    public List<Film> findAll() {
         return new ArrayList<>(films.values());
     }
 
     @Override
-    public Film getFilm(long id) {
+    public Film findById(long id) {
         if (!films.containsKey(id)) {
             String errorMessage = "Film with id " + id + " not found";
             log.error("Cannot get film: {}", errorMessage);
@@ -57,7 +57,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public void addLike(long filmId, long userId) {
-        Film film = getFilm(filmId);
+        Film film = findById(filmId);
 
         if (film.getLikes().add(userId)) {
             log.info("Film with id {} liked by user with id {}", filmId, userId);
@@ -69,7 +69,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public void removeLike(long filmId, long userId) {
-        Film film = getFilm(filmId);
+        Film film = findById(filmId);
         if (film.getLikes().remove(userId)) {
             log.info("Film with id {} unliked by user with id {}", filmId, userId);
         } else {

@@ -19,11 +19,11 @@ public class RatingController {
 
     @GetMapping
     public List<Rating> getRatings() {
-        return ratingStorage.getRatings();
+        return ratingStorage.findAll();
     }
 
     @GetMapping("/{id}")
     public Rating getRating(@PathVariable("id") long id) {
-        return ratingStorage.getRating(id);
+        return ratingStorage.findById(id);
     }
 }
