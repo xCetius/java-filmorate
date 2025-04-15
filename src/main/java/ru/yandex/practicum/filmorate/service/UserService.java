@@ -7,11 +7,14 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -55,12 +58,12 @@ public class UserService {
         validateUser(user);
         validateUser(friend);
 
-        if (user.getFriends().contains(friendId)) {
+        if (user.getFriends().containsKey(friendId)) {
             log.info("User with id {} already has friend with id {}", userId, friendId);
             throw new ValidationException("User with id " + userId + " already has friend with id " + friendId);
         }
 
-        userStorage.addFriend(userId, friendId);
+        userStorage.addFriend(user, friend);
     }
 
     public void removeFriend(long userId, long friendId) throws ValidationException {
@@ -70,7 +73,7 @@ public class UserService {
         validateUser(user);
         validateUser(friend);
 
-        userStorage.removeFriend(userId, friendId);
+        userStorage.removeFriend(user, friend);
 
 
     }
@@ -79,11 +82,14 @@ public class UserService {
         User user = userStorage.findById(userId);
         validateUser(user);
 
-        List<User> friends = new ArrayList<>(user.getFriends().size());
-        for (Long friendId : user.getFriends()) {
-            friends.add(userStorage.findById(friendId));
+        Map<Long, FriendshipStatus> friends = user.getFriends();
+
+        List<User> friendsDto = new ArrayList<>(friends.size());
+
+        for (Long friendId : friends.keySet()) {
+            friendsDto.add(userStorage.findById(friendId));
         }
-        return friends;
+        return friendsDto;
     }
 
     public List<User> showCommonFriends(long userId, long friendId) throws ValidationException {
@@ -95,8 +101,8 @@ public class UserService {
         validateUser(user);
         validateUser(friend);
 
-        Set<Long> userFriends = user.getFriends();
-        Set<Long> friendFriends = friend.getFriends();
+        Set<Long> userFriends = new HashSet<>(user.getFriends().keySet());
+        Set<Long> friendFriends = new HashSet<>(friend.getFriends().keySet());
 
         if (userFriends.isEmpty() || friendFriends.isEmpty()) {
             log.info("User with id {} and friend with id {} have no common friends", userId, friendId);

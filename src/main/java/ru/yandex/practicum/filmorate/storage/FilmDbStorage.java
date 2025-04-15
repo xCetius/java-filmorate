@@ -82,7 +82,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     @Override
     public Film findById(long id) {
         try {
-            return findById(FIND_BY_ID_QUERY,id);
+            return findById(FIND_BY_ID_QUERY, id);
         } catch (Exception e) {
             String errorMessage = "Film with id " + id + " not found";
             log.error("Could not find film: {}", e.getMessage());
@@ -140,20 +140,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public void removeLike(long filmId, long userId) {
-
-        try {
-            int rowsDeleted = jdbcTemplate.update(DELETE_LIKE_QUERY, filmId, userId);
-            if (rowsDeleted == 0) {
-                String errorMessage = "Cannot not delete like";
-                log.error("Cannot not delete like from user with id: {} from film with id: {}", userId, filmId);
-                throw new RuntimeException(errorMessage);
-            }
-        } catch (Exception e) {
-            String errorMessage = "Cannot remove like: " + e.getMessage();
-            log.error("Remove like failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
+        int rowsDeleted = jdbcTemplate.update(DELETE_LIKE_QUERY, filmId, userId);
+        if (rowsDeleted == 0) {
+            String errorMessage = "Cannot not delete like";
+            log.error("Cannot not delete like from user with id: {} from film with id: {}", userId, filmId);
+            throw new NotFoundException(errorMessage);
         }
-
     }
 
     private void insertGenres(Film film) {

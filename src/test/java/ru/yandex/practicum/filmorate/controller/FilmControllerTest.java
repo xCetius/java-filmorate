@@ -2,19 +2,25 @@ package ru.yandex.practicum.filmorate.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.UserDbStorage;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -24,27 +30,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ActiveProfiles("test")
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 @SpringBootTest
+@AutoConfigureTestDatabase
 @AutoConfigureMockMvc
+@Sql({"/schema.sql", "/test-data.sql"})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class FilmControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final MockMvc mockMvc;
+    private final ObjectMapper objectMapper;
+    private final FilmService filmService;
+    private final UserDbStorage userStorage;
 
     private Film validFilm;
     private User validUser;
+    private static Rating rating;
 
-    @Autowired
-    private FilmStorage filmStorage;
 
-    @Autowired
-    private FilmService filmService;
 
-    @Autowired
-    private UserStorage userStorage;
+
+    @BeforeAll
+    static void beforeAll() {
+        rating = new Rating();
+        rating.setId(1L);
+        rating.setName("G");
+    }
 
     @BeforeEach
     void setUp() {
@@ -53,6 +65,8 @@ class FilmControllerTest {
         validFilm.setDescription("This is a test film");
         validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         validFilm.setDuration(Duration.ofMinutes(120));
+        validFilm.setMpa(rating);
+
 
         validUser = new User();
         validUser.setName("Test User");
@@ -100,6 +114,7 @@ class FilmControllerTest {
         nonExistentFilm.setDescription("This film does not exist");
         nonExistentFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         nonExistentFilm.setDuration(Duration.ofMinutes(120));
+        nonExistentFilm.setMpa(rating);
 
         mockMvc.perform(put("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,6 +145,7 @@ class FilmControllerTest {
         invalidFilm.setDescription("This is a test film");
         invalidFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         invalidFilm.setDuration(Duration.ofMinutes(120));
+        validFilm.setMpa(rating);
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -210,10 +226,14 @@ class FilmControllerTest {
     @Test
     void getPopularFilms_ShouldReturnFilms() throws Exception {
         int size = 5;
+        userStorage.addUser(validUser);
 
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/films/1/like/1"))
                 .andExpect(status().isOk());
 
 

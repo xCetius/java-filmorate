@@ -2,14 +2,14 @@ package ru.yandex.practicum.filmorate.mappers;
 
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,16 +23,23 @@ public class UserRowMapper implements RowMapper<User> {
         user.setName(rs.getString("name"));
         user.setBirthday(rs.getDate("birthday").toLocalDate());
 
-        Set<Long> friends = new HashSet<>();
         String friendsConcat = rs.getString("friends");
+        Map<Long, FriendshipStatus> friends = new HashMap<>();
+
         if (friendsConcat != null && !friendsConcat.isBlank()) {
             friends = Arrays.stream(friendsConcat.split(","))
                     .map(String::trim)
-                    .map(Long::parseLong)
-                    .collect(Collectors.toSet());
+                    .map(entry -> entry.split(":"))
+                    .filter(parts -> parts.length == 2)
+                    .collect(Collectors.toMap(
+                            parts -> Long.parseLong(parts[0]),
+                            parts -> FriendshipStatus.valueOf(parts[1])
+                    ));
         }
+
         user.setFriends(friends);
 
         return user;
     }
 }
+

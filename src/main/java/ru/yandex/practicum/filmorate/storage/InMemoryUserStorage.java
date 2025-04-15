@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 
 
 import java.util.ArrayList;
@@ -56,26 +57,24 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public void addFriend(long userId, long friendId) {
-        User user = users.get(userId);
-        User friend = users.get(friendId);
-        user.getFriends().add(friendId);
+    public void addFriend(User user, User friend) {
+        long userId = user.getId();
+        long friendId = friend.getId();
+        user.getFriends().put(friendId, FriendshipStatus.PENDING);
 
         log.info("Friend with id {} added to user with id {}", friendId, userId);
 
     }
 
     @Override
-    public void removeFriend(long userId, long friendId) {
+    public void removeFriend(User user, User friend) {
 
-        User user = users.get(userId);
+        long userId = user.getId();
+        long friendId = friend.getId();
 
-        if (user.getFriends().remove(friendId)) {
+       user.getFriends().remove(friendId);
             log.info("Friend with id {} removed from user with id {}", friendId, userId);
 
-        } else {
-            log.info("Friend with id {} not found in user with id {}", friendId, userId);
-        }
     }
 
 
