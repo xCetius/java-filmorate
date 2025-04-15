@@ -1,24 +1,17 @@
 package ru.yandex.practicum.filmorate.storage;
 
-import com.sun.net.httpserver.Authenticator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,7 +28,6 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.genre_id
             LEFT JOIN likes l ON f.film_id = l.film_id
-            WHERE f.film_id = ?
             GROUP BY f.film_id, r.name
             """;
     private static final String FIND_BY_ID_QUERY = """
@@ -69,19 +61,15 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     String INSERT_LIKE_QUERY = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
 
     @Autowired
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, GenreDbStorage genreDbStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
-        this.genreDbStorage = genreDbStorage;
     }
-
-    private final GenreDbStorage genreDbStorage;
-
 
     @Override
     public List<Film> findAll() {
 
         try {
-            return super.findAll(FIND_ALL_QUERY, mapper);
+            return findAll(FIND_ALL_QUERY);
         } catch (EmptyResultDataAccessException e) {
             String errorMessage = "No films found";
             log.error(errorMessage);
@@ -93,61 +81,40 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public Film findById(long id) {
-        Film film = super.findById(FIND_BY_ID_QUERY, mapper, id);
-
-        if (film == null) {
+        try {
+            return findById(FIND_BY_ID_QUERY,id);
+        } catch (Exception e) {
             String errorMessage = "Film with id " + id + " not found";
-            log.error("Could not find film: {}", errorMessage);
+            log.error("Could not find film: {}", e.getMessage());
             throw new NotFoundException(errorMessage);
         }
-        return film;
-
     }
 
     @Override
     public Film addFilm(Film film) {
 
-        //Проверка на наличие жанров в базе
-        if (film.getGenres() != null) {
-            List<Long> filmGenres = film.getGenres().stream().map(Genre::getId).toList();
-            List<Long> possibleGenres = genreDbStorage.findAll().stream().map(Genre::getId).toList();
-
-
-            for (Long genreId : filmGenres) {
-                if (!possibleGenres.contains(genreId)) {
-                    String errorMessage = "Genre with id " + genreId + " not found";
-                    log.error("Validation failed: {}", errorMessage);
-                    throw new NotFoundException(errorMessage);
-                }
-            }
-        }
-
-
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(INSERT_QUERY, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, film.getName());
-            ps.setString(2, film.getDescription());
-            ps.setDate(3, Date.valueOf(film.getReleaseDate()));
-            ps.setLong(4, film.getDuration().toMinutes());
-            ps.setLong(5, film.getMpa().getId());
-            return ps;
-        }, keyHolder);
-
-        long filmId = Objects.requireNonNull(keyHolder.getKey()).longValue();
-        film.setId(filmId);
+        long id = insert(
+                INSERT_QUERY,
+                film.getName(),
+                film.getDescription(),
+                Date.valueOf(film.getReleaseDate()),
+                film.getDuration().toMinutes(),
+                film.getMpa().getId()
+        );
+        film.setId(id);
         insertGenres(film);
-        return findById(filmId);
+        return film;
+
     }
 
     @Override
     public Film updateFilm(Film film) {
 
         try {
-            jdbcTemplate.update(UPDATE_QUERY, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration().toMinutes(), film.getMpa().getId(), film.getId());
+            update(UPDATE_QUERY, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration().toMinutes(), film.getMpa().getId(), film.getId());
         } catch (Exception e) {
             String errorMessage = "Cannot update film: " + e.getMessage();
-            log.error("Update failed: {}", errorMessage);
+            log.error("Update failed: {}", e.getMessage());
             throw new ValidationException(errorMessage);
         }
         return film;

@@ -10,8 +10,10 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.RatingStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 
 import java.time.LocalDate;
@@ -26,12 +28,14 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final RatingStorage ratingStorage;
+    private final GenreStorage genreStorage;
 
     @Autowired
-    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage, @Qualifier("UserDbStorage") UserStorage userStorage, RatingStorage ratingStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage, @Qualifier("UserDbStorage") UserStorage userStorage, RatingStorage ratingStorage, GenreStorage genreStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.ratingStorage = ratingStorage;
+        this.genreStorage = genreStorage;
     }
 
     public void addLike(long filmId, long userId) throws ValidationException {
@@ -122,6 +126,21 @@ public class FilmService {
             throw new NotFoundException(errorMessage);
         }
 
+        //Проверка на наличие жанров в базе
+        if (film.getGenres() != null) {
+            List<Long> filmGenres = film.getGenres().stream().map(Genre::getId).toList();
+            List<Long> possibleGenres = genreStorage.findAll().stream().map(Genre::getId).toList();
+
+
+            for (Long genreId : filmGenres) {
+                if (!possibleGenres.contains(genreId)) {
+                    String errorMessage = "Genre with id " + genreId + " not found";
+                    log.error("Validation failed: {}", errorMessage);
+                    throw new NotFoundException(errorMessage);
+                }
+            }
+        }
+
 
         log.info("Film validation successful: {}", film.getName());
     }
@@ -151,3 +170,4 @@ public class FilmService {
 
 
 }
+
