@@ -26,11 +26,11 @@ public class UserService {
     private final UserStorage userStorage;
 
     public List<User> getUsers() {
-        return userStorage.getUsers();
+        return userStorage.findAll();
     }
 
     public User getUser(long id) {
-        return userStorage.getUser(id);
+        return userStorage.findById(id);
     }
 
     public User addUser(User user) {
@@ -40,7 +40,7 @@ public class UserService {
 
     public User updateUser(User user) {
         validateUser(user);
-        if (userStorage.getUser(user.getId()) == null) {
+        if (userStorage.findById(user.getId()) == null) {
             log.info("User with id {} not found", user.getId());
             throw new NotFoundException("User with id " + user.getId() + " not found");
         }
@@ -49,8 +49,8 @@ public class UserService {
 
 
     public void addFriend(long userId, long friendId) throws ValidationException {
-        User user = userStorage.getUser(userId);
-        User friend = userStorage.getUser(friendId);
+        User user = userStorage.findById(userId);
+        User friend = userStorage.findById(friendId);
 
         validateUser(user);
         validateUser(friend);
@@ -64,8 +64,8 @@ public class UserService {
     }
 
     public void removeFriend(long userId, long friendId) throws ValidationException {
-        User user = userStorage.getUser(userId);
-        User friend = userStorage.getUser(friendId);
+        User user = userStorage.findById(userId);
+        User friend = userStorage.findById(friendId);
 
         validateUser(user);
         validateUser(friend);
@@ -76,12 +76,12 @@ public class UserService {
     }
 
     public List<User> getFriends(long userId) throws ValidationException {
-        User user = userStorage.getUser(userId);
+        User user = userStorage.findById(userId);
         validateUser(user);
 
         List<User> friends = new ArrayList<>(user.getFriends().size());
         for (Long friendId : user.getFriends()) {
-            friends.add(userStorage.getUser(friendId));
+            friends.add(userStorage.findById(friendId));
         }
         return friends;
     }
@@ -89,8 +89,8 @@ public class UserService {
     public List<User> showCommonFriends(long userId, long friendId) throws ValidationException {
         List<User> commonFriends = new ArrayList<>();
 
-        User user = userStorage.getUser(userId);
-        User friend = userStorage.getUser(friendId);
+        User user = userStorage.findById(userId);
+        User friend = userStorage.findById(friendId);
 
         validateUser(user);
         validateUser(friend);
@@ -104,7 +104,7 @@ public class UserService {
         } else {
             userFriends.retainAll(friendFriends);
             log.info("User with id {} and friend with id {} have {} common friends", userId, friendId, userFriends.size());
-            userFriends.stream().map(userStorage::getUser).forEach(commonFriends::add);
+            userFriends.stream().map(userStorage::findById).forEach(commonFriends::add);
         }
         return commonFriends;
     }

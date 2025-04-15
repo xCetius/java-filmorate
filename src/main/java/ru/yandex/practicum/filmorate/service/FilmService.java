@@ -10,15 +10,15 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.RatingStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,17 +28,19 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final RatingStorage ratingStorage;
+    private final GenreStorage genreStorage;
 
     @Autowired
-    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage, @Qualifier("UserDbStorage") UserStorage userStorage, RatingStorage ratingStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage, @Qualifier("UserDbStorage") UserStorage userStorage, RatingStorage ratingStorage, GenreStorage genreStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.ratingStorage = ratingStorage;
+        this.genreStorage = genreStorage;
     }
 
     public void addLike(long filmId, long userId) throws ValidationException {
-        Film film = filmStorage.getFilm(filmId);
-        User user = userStorage.getUser(userId);
+        Film film = filmStorage.findById(filmId);
+        User user = userStorage.findById(userId);
         if (user == null) {
             log.error("User with id {} not found", userId);
             throw new NotFoundException("User with id " + userId + " not found");
@@ -54,8 +56,8 @@ public class FilmService {
     }
 
     public void removeLike(long filmId, long userId) throws ValidationException {
-        Film film = filmStorage.getFilm(filmId);
-        User user = userStorage.getUser(userId);
+        Film film = filmStorage.findById(filmId);
+        User user = userStorage.findById(userId);
         if (user == null) {
             log.error("User with id {} not found", userId);
             throw new NotFoundException("User with id " + userId + " not found");
@@ -75,7 +77,7 @@ public class FilmService {
             throw new ValidationException("Size must be greater than 0");
         }
 
-        List<Film> allFilms = filmStorage.getFilms();
+        List<Film> allFilms = filmStorage.findAll();
 
         List<Film> sortedFilms = allFilms.stream()
                 .filter(film -> !film.getLikes().isEmpty())
@@ -115,7 +117,7 @@ public class FilmService {
         }
 
         //Проверка на наличие рейтинга в базе
-        List<Long> possibleRatings = ratingStorage.getRatings().stream().map(Rating::getId).toList();
+        List<Long> possibleRatings = ratingStorage.findAll().stream().map(Rating::getId).toList();
         Long ratingId = film.getMpa().getId();
 
         if (!possibleRatings.contains(ratingId)) {
@@ -124,16 +126,31 @@ public class FilmService {
             throw new NotFoundException(errorMessage);
         }
 
+        //Проверка на наличие жанров в базе
+        if (film.getGenres() != null) {
+            List<Long> filmGenres = film.getGenres().stream().map(Genre::getId).toList();
+            List<Long> possibleGenres = genreStorage.findAll().stream().map(Genre::getId).toList();
+
+
+            for (Long genreId : filmGenres) {
+                if (!possibleGenres.contains(genreId)) {
+                    String errorMessage = "Genre with id " + genreId + " not found";
+                    log.error("Validation failed: {}", errorMessage);
+                    throw new NotFoundException(errorMessage);
+                }
+            }
+        }
+
 
         log.info("Film validation successful: {}", film.getName());
     }
 
     public List<Film> getFilms() {
-        return filmStorage.getFilms();
+        return filmStorage.findAll();
     }
 
     public Film getFilm(long id) {
-        return filmStorage.getFilm(id);
+        return filmStorage.findById(id);
     }
 
     public Film addFilm(Film film) {
@@ -153,3 +170,4 @@ public class FilmService {
 
 
 }
+

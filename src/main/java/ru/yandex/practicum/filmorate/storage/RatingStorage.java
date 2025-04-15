@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface RatingStorage {
 
-    Rating getRating(long id);
+    Rating findById(long id);
 
-    List<Rating> getRatings();
+    List<Rating> findAll();
 }
