@@ -14,9 +14,13 @@ import java.util.List;
 @Slf4j
 public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorage {
 
-    private static final String FIND_ALL_QUERY = "SELECT * FROM genres order by genre_id asc";
+    private static final String FIND_ALL_QUERY = """
+            SELECT * FROM genres order by genre_id asc
+            """;
 
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE genre_id = ?";
+    private static final String FIND_BY_ID_QUERY = """
+            SELECT * FROM genres WHERE genre_id = ?
+            """;
 
     @Autowired
     public GenreDbStorage(JdbcTemplate jdbcTemplate, RowMapper<Genre> mapper) {

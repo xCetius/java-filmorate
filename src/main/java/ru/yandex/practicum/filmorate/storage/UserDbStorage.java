@@ -47,15 +47,24 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             """;
 
 
-    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+    private static final String DELETE_FRIEND_QUERY = """
+    DELETE FROM friends WHERE user_id = ? AND friend_id = ?
+    """;
 
-    private static final String CONFIRM_FRIEND_QUERY = "UPDATE friends SET status = ? WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)";
+    private static final String CONFIRM_FRIEND_QUERY = """
+    UPDATE friends SET status = ? 
+    WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+    """;
 
-    private static final String ADD_FRIEND_QUERY = "INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)";
+    private static final String ADD_FRIEND_QUERY = """
+    INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)
+    """;
 
-    private static final String REMOVE_FRIEND_CHANGE_STATUS_QUERY = "UPDATE friends SET status = ? WHERE friend_id = ? AND user_id = ?";
+    private static final String REMOVE_FRIEND_CHANGE_STATUS_QUERY = """
+    UPDATE friends SET status = ? WHERE friend_id = ? AND user_id = ?""";
 
-    private static final String FIND_FRIENDS_COUNT_QUERY = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
+    private static final String FIND_FRIENDS_COUNT_QUERY = """
+    SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?""";
 
     @Autowired
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {

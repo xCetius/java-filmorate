@@ -54,11 +54,19 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             WHERE film_id = ?
             """;
 
-    String INSERT_GENRE_QUERY = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+    private static final String INSERT_GENRE_QUERY = """
+            INSERT INTO film_genres (film_id, genre_id) 
+            VALUES (?, ?)
+            """;
 
-    String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+    private static final String DELETE_LIKE_QUERY = """
+            DELETE FROM likes
+            WHERE film_id = ? AND user_id = ?
+            """;
 
-    String INSERT_LIKE_QUERY = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
+    private static final String INSERT_LIKE_QUERY = """
+            INSERT INTO likes (film_id, user_id) VALUES (?, ?)
+            """;
 
     @Autowired
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {

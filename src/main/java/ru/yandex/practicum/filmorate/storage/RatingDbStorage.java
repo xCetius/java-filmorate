@@ -14,9 +14,13 @@ import java.util.List;
 @Slf4j
 public class RatingDbStorage extends BaseRepository<Rating> implements RatingStorage {
 
-    private static final String FIND_ALL_QUERY = "SELECT * FROM ratings;";
+    private static final String FIND_ALL_QUERY = """
+            SELECT * FROM ratings;
+            """;
 
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM ratings WHERE rating_id = ?";
+    private static final String FIND_BY_ID_QUERY = """
+            SELECT * FROM ratings WHERE rating_id = ?
+            """;
 
     @Autowired
     public RatingDbStorage(JdbcTemplate jdbcTemplate, RowMapper<Rating> mapper) {
