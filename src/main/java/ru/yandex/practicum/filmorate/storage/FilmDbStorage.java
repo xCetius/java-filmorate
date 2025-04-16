@@ -55,7 +55,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             """;
 
     private static final String INSERT_GENRE_QUERY = """
-            INSERT INTO film_genres (film_id, genre_id) 
+            INSERT INTO film_genres (film_id, genre_id)
             VALUES (?, ?)
             """;
 

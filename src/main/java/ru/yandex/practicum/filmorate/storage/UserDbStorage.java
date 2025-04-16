@@ -52,7 +52,7 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     """;
 
     private static final String CONFIRM_FRIEND_QUERY = """
-    UPDATE friends SET status = ? 
+    UPDATE friends SET status = ?
     WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
     """;
 
