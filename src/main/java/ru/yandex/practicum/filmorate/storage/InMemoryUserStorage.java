@@ -72,8 +72,8 @@ public class InMemoryUserStorage implements UserStorage {
         long userId = user.getId();
         long friendId = friend.getId();
 
-       user.getFriends().remove(friendId);
-            log.info("Friend with id {} removed from user with id {}", friendId, userId);
+        user.getFriends().remove(friendId);
+        log.info("Friend with id {} removed from user with id {}", friendId, userId);
 
     }
 

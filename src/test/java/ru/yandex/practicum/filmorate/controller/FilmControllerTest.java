@@ -17,6 +17,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -24,11 +25,16 @@ import ru.yandex.practicum.filmorate.storage.UserDbStorage;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Set;
 
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @ActiveProfiles("test")
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -47,8 +53,6 @@ class FilmControllerTest {
     private Film validFilm;
     private User validUser;
     private static Rating rating;
-
-
 
 
     @BeforeAll
@@ -85,7 +89,75 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.name").value("Test Film"))
                 .andExpect(jsonPath("$.description").value("This is a test film"))
                 .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
-                .andExpect(jsonPath("$.duration").value(120));
+                .andExpect(jsonPath("$.duration").value(120))
+                .andExpect(jsonPath("$.mpa.name").value("G"));
+    }
+
+    @Test
+    void testAddFilmFailMpa() throws Exception {
+
+        Rating invalidRating = new Rating();
+        invalidRating.setId(55L);
+        invalidRating.setName("M");
+
+        Film invalidFilm = new Film();
+        invalidFilm.setName("adsasd");
+        invalidFilm.setDescription("This is a test film");
+        invalidFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilm.setDuration(Duration.ofMinutes(120));
+        invalidFilm.setMpa(invalidRating);
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidFilm)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testAddFilmFailGenre() throws Exception {
+
+        Genre invalidGenre = new Genre();
+        invalidGenre.setId(55L);
+
+        Set<Genre> genres = Set.of(invalidGenre);
+
+        Film invalidFilm = new Film();
+        invalidFilm.setName("adsasd");
+        invalidFilm.setDescription("This is a test film");
+        invalidFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilm.setDuration(Duration.ofMinutes(120));
+        invalidFilm.setMpa(rating);
+        invalidFilm.setGenres(genres);
+
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidFilm)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testAddFilmWithGenres() throws Exception {
+
+        Genre genre1 = new Genre();
+        genre1.setId(1L);
+
+        Genre genre2 = new Genre();
+        genre2.setId(2L);
+
+        Set<Genre> genres = Set.of(genre1, genre2);
+        validFilm.setGenres(genres);
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.name").value("Test Film"))
+                .andExpect(jsonPath("$.description").value("This is a test film"))
+                .andExpect(jsonPath("$.releaseDate").value("2000-01-01"))
+                .andExpect(jsonPath("$.duration").value(120))
+                .andExpect(jsonPath("$.genres.length()").value(2));
     }
 
     @Test
