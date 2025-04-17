@@ -30,13 +30,7 @@ public abstract class BaseRepository<T> {
     }
 
     protected List<T> findAll(String query, Object... params) {
-        List<T> results = jdbcTemplate.query(query, mapper, params);
-
-        if (results.isEmpty()) {
-            throw new NotFoundException("No entities found");
-        }
-
-        return results;
+        return jdbcTemplate.query(query, mapper, params);
     }
 
     protected long insert(String query, Object... params) {

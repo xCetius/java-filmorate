@@ -74,11 +74,21 @@ public class UserService {
     }
 
     public List<User> getFriends(long userId) throws ValidationException {
+        User user = userStorage.findById(userId);
+
+        validateUser(user);
 
         return userStorage.findFriendsByUserId(userId);
     }
 
     public List<User> showCommonFriends(long userId, long friendId) throws ValidationException {
+
+        User user = userStorage.findById(userId);
+        User friend = userStorage.findById(friendId);
+
+        validateUser(user);
+        validateUser(friend);
+
         return userStorage.findCommonFriends(userId, friendId);
     }
 
