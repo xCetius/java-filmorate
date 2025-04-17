@@ -1,11 +1,9 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Rating;
 
 import java.util.List;
@@ -28,12 +26,7 @@ public class RatingDbStorage extends BaseRepository<Rating> implements RatingSto
 
     @Override
     public Rating findById(long id) {
-        try {
-            return findById(FIND_BY_ID_QUERY, id);
-        } catch (EmptyResultDataAccessException e) {
-            String errorMessage = "Rating with id " + id + " not found";
-            throw new NotFoundException(errorMessage);
-        }
+        return findById(FIND_BY_ID_QUERY, id);
     }
 
     @Override

@@ -154,6 +154,12 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.name").value("testLogin6"));
     }
 
+    @Test
+    void testGetFriends_UnknownId() throws Exception {
+        mockMvc.perform(get("/users/{id}/friends", 1))
+                .andExpect(status().isNotFound());
+    }
+
     @DisplayName("Add 2 users and make them friends")
     @Test
     void addFriend_ShouldReturnOkAndCheckStatus() throws Exception {

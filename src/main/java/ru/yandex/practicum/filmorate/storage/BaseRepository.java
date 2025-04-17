@@ -30,11 +30,13 @@ public abstract class BaseRepository<T> {
     }
 
     protected List<T> findAll(String query, Object... params) {
-        try {
-            return jdbcTemplate.query(query, mapper, params);
-        } catch (EmptyResultDataAccessException e) {
+        List<T> results = jdbcTemplate.query(query, mapper, params);
+
+        if (results.isEmpty()) {
             throw new NotFoundException("No entities found");
         }
+
+        return results;
     }
 
     protected long insert(String query, Object... params) {
