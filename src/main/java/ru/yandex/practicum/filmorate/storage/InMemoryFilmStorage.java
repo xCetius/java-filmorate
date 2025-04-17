@@ -8,9 +8,11 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository("inMemoryFilmStorage")
 @Slf4j
@@ -86,6 +88,21 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .orElse(0);
         return ++currentMaxId;
     }
+
+    public List<Film> findPopular(int size) {
+        List<Film> allFilms = findAll();
+
+        List<Film> sortedFilms = allFilms.stream()
+                .filter(film -> !film.getLikes().isEmpty())
+                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).thenComparing(Film::getId).reversed())
+                .toList();
+
+        return sortedFilms.stream()
+                .limit(Math.min(size, sortedFilms.size()))
+                .collect(Collectors.toList());
+    }
+
+
 
 
 }

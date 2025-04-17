@@ -15,7 +15,11 @@ import java.util.List;
 public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
     private static final String FIND_ALL_QUERY = """
-            SELECT  u.*,
+            SELECT  u.user_id,
+            u.email,
+            u.login,
+            u.name,
+            u.birthday,
             GROUP_CONCAT(f.friend_id || ':' || f.status) AS friends
             FROM users u
             LEFT JOIN friends f ON u.user_id = f.user_id
@@ -24,7 +28,11 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
 
     private static final String FIND_BY_ID_QUERY = """
-            SELECT u.*,
+            SELECT u.user_id,
+            u.email,
+            u.login,
+            u.name,
+            u.birthday,
             GROUP_CONCAT(f.friend_id || ':' || f.status) AS friends,
             FROM users u
             LEFT JOIN friends f ON u.user_id = f.user_id
@@ -64,8 +72,12 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?""";
 
     private static final String FIND_FRIENDS_BY_USER_QUERY = """
-                    SELECT u.*,
-                   GROUP_CONCAT(f2.friend_id || ':' || f2.status) AS friends
+                    SELECT u.user_id,
+            u.email,
+            u.login,
+            u.name,
+            u.birthday,
+            GROUP_CONCAT(f2.friend_id || ':' || f2.status) AS friends
             FROM users u
             LEFT JOIN friends f2 ON u.user_id = f2.user_id
             WHERE u.user_id IN (
@@ -77,8 +89,12 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
             """;
 
     private static final String FIND_COMMON_FRIENDS_QUERY = """
-            SELECT u.*,
-                   GROUP_CONCAT(f2.friend_id || ':' || f2.status) AS friends
+            SELECT u.user_id,
+            u.email,
+            u.login,
+            u.name,
+            u.birthday,
+            GROUP_CONCAT(f2.friend_id || ':' || f2.status) AS friends
             FROM users u
             LEFT JOIN friends f2 ON u.user_id = f2.user_id
             WHERE u.user_id IN (

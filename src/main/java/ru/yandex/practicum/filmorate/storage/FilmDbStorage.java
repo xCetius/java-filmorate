@@ -18,7 +18,12 @@ import java.util.stream.Collectors;
 public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     private static final String FIND_ALL_QUERY = """
-            SELECT f.*,
+            SELECT f.film_id,
+                   f.name,
+                   f.description,
+                   f.release_date,
+                   f.duration,
+                   r.rating_id,
                    r.name AS rating_name,
                    GROUP_CONCAT(DISTINCT (g.genre_id || ':' || g.name)) AS genre_data,
                    GROUP_CONCAT(DISTINCT l.user_id) AS likes
@@ -30,7 +35,12 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             GROUP BY f.film_id, r.name
             """;
     private static final String FIND_BY_ID_QUERY = """
-            SELECT f.*,
+            SELECT f.film_id,
+                   f.name,
+                   f.description,
+                   f.release_date,
+                   f.duration,
+                   r.rating_id,
                    r.name AS rating_name,
                    GROUP_CONCAT(DISTINCT (g.genre_id || ':' || g.name)) AS genre_data,
                    GROUP_CONCAT(DISTINCT l.user_id) AS likes
@@ -41,6 +51,29 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             LEFT JOIN likes l ON f.film_id = l.film_id
             WHERE f.film_id = ?
             GROUP BY f.film_id, r.name
+            """;
+
+
+    private static final String FIND_POPULAR_QUERY = """
+            SELECT f.film_id,
+                   f.name,
+                   f.description,
+                   f.release_date,
+                   f.duration,
+                   r.rating_id,
+                   r.name AS rating_name,
+                   GROUP_CONCAT(DISTINCT (g.genre_id || ':' || g.name)) AS genre_data,
+                   GROUP_CONCAT(DISTINCT l.user_id) AS likes,
+                   COUNT(l.user_id) AS like_count
+            FROM films f
+            LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN likes l ON f.film_id = l.film_id
+            GROUP BY f.film_id
+            HAVING COUNT(l.user_id) > 0
+            ORDER BY like_count DESC, f.film_id DESC
+            LIMIT ?
             """;
 
     private static final String INSERT_QUERY = """
@@ -66,6 +99,7 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
     private static final String INSERT_LIKE_QUERY = """
             INSERT INTO likes (film_id, user_id) VALUES (?, ?)
             """;
+
 
     @Autowired
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
@@ -147,5 +181,10 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
             throw new NotFoundException("Genre not found");
         }
     }
+
+    public List<Film> findPopular(int size) {
+        return findAll(FIND_POPULAR_QUERY, size);
+    }
+
 
 }

@@ -9,15 +9,11 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.GenreStorage;
-import ru.yandex.practicum.filmorate.storage.RatingStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -74,17 +70,7 @@ public class FilmService {
             log.error("Requested popular films size must be positive, but was: {}", size);
             throw new ValidationException("Size must be greater than 0");
         }
-
-        List<Film> allFilms = filmStorage.findAll();
-
-        List<Film> sortedFilms = allFilms.stream()
-                .filter(film -> !film.getLikes().isEmpty())
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).thenComparing(Film::getId).reversed())
-                .toList();
-
-        return sortedFilms.stream()
-                .limit(Math.min(size, sortedFilms.size()))
-                .collect(Collectors.toList());
+        return filmStorage.findPopular(size);
     }
 
     public void validateFilm(Film film) {
