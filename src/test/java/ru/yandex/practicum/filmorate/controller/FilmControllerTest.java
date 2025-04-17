@@ -281,7 +281,13 @@ class FilmControllerTest {
     }
 
     @Test
-    void testReturnTopFilms() throws Exception {
+    void testReturnFilms() throws Exception {
+
+        mockMvc.perform(post("/films")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validFilm)))
+                .andExpect(status().isOk());
+
         mockMvc.perform(get("/films"))
                 .andExpect(status().isOk());
     }

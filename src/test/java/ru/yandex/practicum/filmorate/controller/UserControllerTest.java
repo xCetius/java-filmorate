@@ -214,16 +214,21 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(validFriend)))
                 .andExpect(status().isOk());
 
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", 1, 2))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/users/{id}/friends/{friendId}", 2, 1))
+                .andExpect(status().isOk());
+
         mockMvc.perform(delete("/users/{id}/friends/{friendId}", 1, 2))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/users/{id}/friends", 1))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(get("/users/{id}/friends", 2))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
