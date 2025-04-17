@@ -7,15 +7,10 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -79,40 +74,12 @@ public class UserService {
     }
 
     public List<User> getFriends(long userId) throws ValidationException {
-        User user = userStorage.findById(userId);
-        validateUser(user);
 
-        Map<Long, FriendshipStatus> friends = user.getFriends();
-
-        List<User> friendsDto = new ArrayList<>(friends.size());
-
-        for (Long friendId : friends.keySet()) {
-            friendsDto.add(userStorage.findById(friendId));
-        }
-        return friendsDto;
+        return userStorage.findFriendsByUserId(userId);
     }
 
     public List<User> showCommonFriends(long userId, long friendId) throws ValidationException {
-        List<User> commonFriends = new ArrayList<>();
-
-        User user = userStorage.findById(userId);
-        User friend = userStorage.findById(friendId);
-
-        validateUser(user);
-        validateUser(friend);
-
-        Set<Long> userFriends = new HashSet<>(user.getFriends().keySet());
-        Set<Long> friendFriends = new HashSet<>(friend.getFriends().keySet());
-
-        if (userFriends.isEmpty() || friendFriends.isEmpty()) {
-            log.info("User with id {} and friend with id {} have no common friends", userId, friendId);
-
-        } else {
-            userFriends.retainAll(friendFriends);
-            log.info("User with id {} and friend with id {} have {} common friends", userId, friendId, userFriends.size());
-            userFriends.stream().map(userStorage::findById).forEach(commonFriends::add);
-        }
-        return commonFriends;
+        return userStorage.findCommonFriends(userId, friendId);
     }
 
 

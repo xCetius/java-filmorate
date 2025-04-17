@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
@@ -29,14 +28,7 @@ public class GenreDbStorage extends BaseRepository<Genre> implements GenreStorag
 
     @Override
     public Genre findById(long id) {
-        try {
-            return findById(FIND_BY_ID_QUERY, id);
-        } catch (Exception e) {
-            String errorMessage = "Genre with id " + id + " not found";
-            log.error(errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
-
+        return findById(FIND_BY_ID_QUERY, id);
     }
 
     @Override

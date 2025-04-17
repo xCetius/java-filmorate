@@ -1,27 +1,40 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Objects;
 
-@Slf4j
+
 @RequiredArgsConstructor
 public abstract class BaseRepository<T> {
     protected final JdbcTemplate jdbcTemplate;
     protected final RowMapper<T> mapper;
 
     protected T findById(String query, Object... params) {
-        return jdbcTemplate.queryForObject(query, mapper, params);
+
+        try {
+            return jdbcTemplate.queryForObject(query, mapper, params);
+        } catch (EmptyResultDataAccessException e) {
+            String errorMessage = "Entity with id " + params[0] + " not found";
+            throw new NotFoundException(errorMessage);
+        }
+
     }
 
     protected List<T> findAll(String query, Object... params) {
-        return jdbcTemplate.query(query, mapper, params);
+        try {
+            return jdbcTemplate.query(query, mapper, params);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("No entities found");
+        }
     }
 
     protected long insert(String query, Object... params) {
@@ -35,16 +48,7 @@ public abstract class BaseRepository<T> {
             return ps;
         }, keyHolder);
 
-        Long id = keyHolder.getKeyAs(Long.class);
-
-        // Возвращаем id нового пользователя
-        if (id != null) {
-            return id;
-        } else {
-            String errorMessage = "Could not save entity";
-            log.error(errorMessage);
-            throw new RuntimeException(errorMessage);
-        }
+        return Objects.requireNonNull(keyHolder.getKeyAs(Long.class), "Failed to retrieve generated ID");
     }
 
     protected void update(String query, Object... params) {

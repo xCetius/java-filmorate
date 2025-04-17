@@ -2,12 +2,9 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 
@@ -48,23 +45,51 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
 
     private static final String DELETE_FRIEND_QUERY = """
-    DELETE FROM friends WHERE user_id = ? AND friend_id = ?
-    """;
+            DELETE FROM friends WHERE user_id = ? AND friend_id = ?
+            """;
 
     private static final String CONFIRM_FRIEND_QUERY = """
-    UPDATE friends SET status = ?
-    WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
-    """;
+            UPDATE friends SET status = ?
+            WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+            """;
 
     private static final String ADD_FRIEND_QUERY = """
-    INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)
-    """;
+            INSERT INTO friends (user_id, friend_id, status) VALUES (?, ?, ?)
+            """;
 
     private static final String REMOVE_FRIEND_CHANGE_STATUS_QUERY = """
-    UPDATE friends SET status = ? WHERE friend_id = ? AND user_id = ?""";
+            UPDATE friends SET status = ? WHERE friend_id = ? AND user_id = ?""";
 
     private static final String FIND_FRIENDS_COUNT_QUERY = """
-    SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?""";
+            SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?""";
+
+    private static final String FIND_FRIENDS_BY_USER_QUERY = """
+                    SELECT u.*,
+                   GROUP_CONCAT(f2.friend_id || ':' || f2.status) AS friends
+            FROM users u
+            LEFT JOIN friends f2 ON u.user_id = f2.user_id
+            WHERE u.user_id IN (
+                SELECT f.friend_id
+                FROM friends f
+                WHERE f.user_id = ?
+            )
+            GROUP BY u.user_id
+            """;
+
+    private static final String FIND_COMMON_FRIENDS_QUERY = """
+            SELECT u.*,
+                   GROUP_CONCAT(f2.friend_id || ':' || f2.status) AS friends
+            FROM users u
+            LEFT JOIN friends f2 ON u.user_id = f2.user_id
+            WHERE u.user_id IN (
+                SELECT f1.friend_id
+                FROM friends f1
+                JOIN friends f2 ON f1.friend_id = f2.friend_id
+                WHERE f1.user_id = ? AND f2.user_id = ?
+            )
+            GROUP BY u.user_id
+            """;
+
 
     @Autowired
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
@@ -74,24 +99,12 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
     @Override
     public List<User> findAll() {
-        try {
-            return findAll(FIND_ALL_QUERY);
-        } catch (EmptyResultDataAccessException e) {
-            String errorMessage = "Users not found";
-            log.error(e.getMessage());
-            throw new NotFoundException(errorMessage);
-        }
+        return findAll(FIND_ALL_QUERY);
     }
 
     @Override
     public User findById(long id) {
-        try {
-            return findById(FIND_BY_ID_QUERY, id);
-        } catch (EmptyResultDataAccessException e) {
-            String errorMessage = "User with id " + id + " not found";
-            log.error(e.getMessage());
-            throw new NotFoundException(errorMessage);
-        }
+        return findById(FIND_BY_ID_QUERY, id);
     }
 
 
@@ -111,13 +124,8 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        try {
-            update(UPDATE_QUERY, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(), user.getId());
-        } catch (Exception e) {
-            String errorMessage = "Cannot update user: " + e.getMessage();
-            log.error("Update failed: {} ", errorMessage);
-            throw new ValidationException(errorMessage);
-        }
+        update(UPDATE_QUERY, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(), user.getId());
+        log.info("User with id {} updated", user.getId());
         return user;
     }
 
@@ -164,6 +172,15 @@ public class UserDbStorage extends BaseRepository<User> implements UserStorage {
     private boolean existsFriendship(long userId, long friendId) {
         int count = jdbcTemplate.queryForObject(FIND_FRIENDS_COUNT_QUERY, Integer.class, userId, friendId);
         return count > 0;
+    }
+
+    public List<User> findFriendsByUserId(long userId) {
+        return findAll(FIND_FRIENDS_BY_USER_QUERY, userId);
+    }
+
+    @Override
+    public List<User> findCommonFriends(long userId, long friendId) {
+        return findAll(FIND_COMMON_FRIENDS_QUERY, userId, friendId);
     }
 
 }

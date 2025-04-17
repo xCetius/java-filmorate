@@ -2,12 +2,11 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.sql.Date;
@@ -75,73 +74,52 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
 
     @Override
     public List<Film> findAll() {
-
-        try {
-            return findAll(FIND_ALL_QUERY);
-        } catch (EmptyResultDataAccessException e) {
-            String errorMessage = "No films found";
-            log.error(errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
-
+        return findAll(FIND_ALL_QUERY);
     }
 
 
     @Override
     public Film findById(long id) {
-        try {
-            return findById(FIND_BY_ID_QUERY, id);
-        } catch (Exception e) {
-            String errorMessage = "Film with id " + id + " not found";
-            log.error("Could not find film: {}", e.getMessage());
-            throw new NotFoundException(errorMessage);
-        }
+        return findById(FIND_BY_ID_QUERY, id);
     }
 
     @Override
     public Film addFilm(Film film) {
 
-        long id = insert(
-                INSERT_QUERY,
-                film.getName(),
-                film.getDescription(),
-                Date.valueOf(film.getReleaseDate()),
-                film.getDuration().toMinutes(),
-                film.getMpa().getId()
-        );
+        long id = -1;
+
+        try {
+            id = insert(
+                    INSERT_QUERY,
+                    film.getName(),
+                    film.getDescription(),
+                    Date.valueOf(film.getReleaseDate()),
+                    film.getDuration().toMinutes(),
+                    film.getMpa().getId());
+        } catch (DataIntegrityViolationException e) {
+            throw new NotFoundException("Rating with id " + film.getMpa().getId() + " not found");
+        }
+
         film.setId(id);
         insertGenres(film);
+        log.info("Film with id {} saved", id);
         return film;
 
     }
 
     @Override
     public Film updateFilm(Film film) {
-
-        try {
-            update(UPDATE_QUERY, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration().toMinutes(), film.getMpa().getId(), film.getId());
-        } catch (Exception e) {
-            String errorMessage = "Cannot update film: " + e.getMessage();
-            log.error("Update failed: {}", e.getMessage());
-            throw new ValidationException(errorMessage);
-        }
+        update(UPDATE_QUERY, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration().toMinutes(), film.getMpa().getId(), film.getId());
+        log.info("Film with id {} updated", film.getId());
         return film;
     }
 
     @Override
     public void addLike(long filmId, long userId) {
 
-        try {
-            int rowsUpdated = jdbcTemplate.update(INSERT_LIKE_QUERY, filmId, userId);
-            if (rowsUpdated == 0) {
-                String errorMessage = "Cannot add like";
-                log.error("Cannot add like from user with id: {} to film with id: {}", userId, filmId);
-                throw new RuntimeException(errorMessage);
-            }
-        } catch (Exception e) {
-            String errorMessage = "Cannot add like: " + e.getMessage();
-            log.error("Add like failed: {}", errorMessage);
-            throw new ValidationException(errorMessage);
+        int rowsUpdated = jdbcTemplate.update(INSERT_LIKE_QUERY, filmId, userId);
+        if (rowsUpdated == 0) {
+            log.error("Cannot add like from user with id: {} to film with id: {}", userId, filmId);
         }
 
     }
@@ -163,7 +141,11 @@ public class FilmDbStorage extends BaseRepository<Film> implements FilmStorage {
                 .map(genre -> new Object[]{film.getId(), genre.getId()})
                 .collect(Collectors.toList());
 
-        jdbcTemplate.batchUpdate(INSERT_GENRE_QUERY, batchArgs);
+        try {
+            jdbcTemplate.batchUpdate(INSERT_GENRE_QUERY, batchArgs);
+        } catch (DataIntegrityViolationException e) {
+            throw new NotFoundException("Genre not found");
+        }
     }
 
 }

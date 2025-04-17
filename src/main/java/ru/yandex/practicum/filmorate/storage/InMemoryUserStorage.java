@@ -7,10 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.enums.FriendshipStatus;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository("inMemoryUserStorage")
 @Slf4j
@@ -77,6 +74,31 @@ public class InMemoryUserStorage implements UserStorage {
 
     }
 
+    @Override
+    public List<User> findFriendsByUserId(long userId) {
+        return new ArrayList<>(users.get(userId).getFriends().keySet().stream().map(users::get).toList());
+    }
+
+    @Override
+    public List<User> findCommonFriends(long userId, long friendId) {
+        List<User> commonFriends = new ArrayList<>();
+
+        User user = findById(userId);
+        User friend = findById(friendId);
+
+        Set<Long> userFriends = new HashSet<>(user.getFriends().keySet());
+        Set<Long> friendFriends = new HashSet<>(friend.getFriends().keySet());
+
+        if (userFriends.isEmpty() || friendFriends.isEmpty()) {
+            log.info("User with id {} and friend with id {} have no common friends", userId, friendId);
+
+        } else {
+            userFriends.retainAll(friendFriends);
+            log.info("User with id {} and friend with id {} have {} common friends", userId, friendId, userFriends.size());
+            userFriends.stream().map(this::findById).forEach(commonFriends::add);
+        }
+        return commonFriends;
+    }
 
     public long getNextUserId() {
         long currentMaxId = users.keySet()

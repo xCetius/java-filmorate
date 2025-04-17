@@ -24,50 +24,47 @@ public class FilmRowMapper implements RowMapper<Film> {
 
         Film film = new Film();
 
-        try {
-            film.setId(rs.getLong("film_id"));
-            film.setName(rs.getString("name"));
-            film.setDescription(rs.getString("description"));
-            film.setReleaseDate(rs.getDate("release_date").toLocalDate());
-            film.setDuration(Duration.ofMinutes(rs.getLong("duration")));
+        film.setId(rs.getLong("film_id"));
+        film.setName(rs.getString("name"));
+        film.setDescription(rs.getString("description"));
+        film.setReleaseDate(rs.getDate("release_date").toLocalDate());
+        film.setDuration(Duration.ofMinutes(rs.getLong("duration")));
 
-            // MPA (Rating)
-            Rating rating = new Rating();
-            rating.setId(rs.getLong("rating_id"));
-            rating.setName(rs.getString("rating_name"));
-            film.setMpa(rating);
+        // MPA (Rating)
+        Rating rating = new Rating();
+        rating.setId(rs.getLong("rating_id"));
+        rating.setName(rs.getString("rating_name"));
+        film.setMpa(rating);
 
-            // Likes
-            Set<Long> likes = new HashSet<>();
-            String likesConcat = rs.getString("likes");
-            if (likesConcat != null && !likesConcat.isBlank()) {
-                likes = Arrays.stream(likesConcat.split(","))
-                        .map(String::trim)
-                        .map(Long::parseLong)
-                        .collect(Collectors.toSet());
-            }
-            film.setLikes(likes);
-
-            // Genres
-            Set<Genre> genres = new LinkedHashSet<>();
-            String genreData = rs.getString("genre_data");
-            if (genreData != null && !genreData.isBlank()) {
-                genres = Arrays.stream(genreData.split(","))
-                        .map(String::trim)
-                        .map(pair -> {
-                            String[] parts = pair.split(":");
-                            Genre genre = new Genre();
-                            genre.setId(Long.parseLong(parts[0]));
-                            genre.setName(parts[1]);
-                            return genre;
-                        })
-                        .sorted(Comparator.comparingLong(Genre::getId))
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
-            }
-            film.setGenres(genres);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        // Likes
+        Set<Long> likes = new HashSet<>();
+        String likesConcat = rs.getString("likes");
+        if (likesConcat != null && !likesConcat.isBlank()) {
+            likes = Arrays.stream(likesConcat.split(","))
+                    .map(String::trim)
+                    .map(Long::parseLong)
+                    .collect(Collectors.toSet());
         }
+        film.setLikes(likes);
+
+        // Genres
+        Set<Genre> genres = new LinkedHashSet<>();
+        String genreData = rs.getString("genre_data");
+        if (genreData != null && !genreData.isBlank()) {
+            genres = Arrays.stream(genreData.split(","))
+                    .map(String::trim)
+                    .map(pair -> {
+                        String[] parts = pair.split(":");
+                        Genre genre = new Genre();
+                        genre.setId(Long.parseLong(parts[0]));
+                        genre.setName(parts[1]);
+                        return genre;
+                    })
+                    .sorted(Comparator.comparingLong(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+        }
+        film.setGenres(genres);
+
 
         return film;
     }

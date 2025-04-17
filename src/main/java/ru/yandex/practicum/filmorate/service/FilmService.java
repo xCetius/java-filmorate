@@ -7,13 +7,11 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.RatingStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
-import ru.yandex.practicum.filmorate.model.Genre;
 
 
 import java.time.LocalDate;
@@ -25,17 +23,17 @@ import java.util.stream.Collectors;
 @Service
 public class FilmService {
 
+    private static final int MAX_NAME_LENGTH = 50;
+    private static final int MAX_DESCRIPTION_LENGTH = 200;
+    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-    private final RatingStorage ratingStorage;
-    private final GenreStorage genreStorage;
 
     @Autowired
-    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage, @Qualifier("UserDbStorage") UserStorage userStorage, RatingStorage ratingStorage, GenreStorage genreStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage, @Qualifier("UserDbStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
-        this.ratingStorage = ratingStorage;
-        this.genreStorage = genreStorage;
     }
 
     public void addLike(long filmId, long userId) throws ValidationException {
@@ -92,13 +90,13 @@ public class FilmService {
     public void validateFilm(Film film) {
         log.debug("Starting validation for film: {}", film.getName());
 
-        if (film.getName().length() > 50) {
+        if (film.getName().length() > MAX_NAME_LENGTH) {
             String errorMessage = "Film name must be less than 50 symbols";
             log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
 
-        if (film.getDescription().length() > 200) {
+        if (film.getDescription().length() > MAX_DESCRIPTION_LENGTH) {
             String errorMessage = "Film description must be less than 200 symbols";
             log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
@@ -110,37 +108,11 @@ public class FilmService {
             throw new ValidationException(errorMessage);
         }
 
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+        if (film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
             String errorMessage = "Film release date must not be before 1895-12-28";
             log.error("Validation failed: {}", errorMessage);
             throw new ValidationException(errorMessage);
         }
-
-        //Проверка на наличие рейтинга в базе
-        List<Long> possibleRatings = ratingStorage.findAll().stream().map(Rating::getId).toList();
-        Long ratingId = film.getMpa().getId();
-
-        if (!possibleRatings.contains(ratingId)) {
-            String errorMessage = "Rating with id " + film.getMpa().getId() + " not found";
-            log.error("Validation failed: {}", errorMessage);
-            throw new NotFoundException(errorMessage);
-        }
-
-        //Проверка на наличие жанров в базе
-        if (film.getGenres() != null) {
-            List<Long> filmGenres = film.getGenres().stream().map(Genre::getId).toList();
-            List<Long> possibleGenres = genreStorage.findAll().stream().map(Genre::getId).toList();
-
-
-            for (Long genreId : filmGenres) {
-                if (!possibleGenres.contains(genreId)) {
-                    String errorMessage = "Genre with id " + genreId + " not found";
-                    log.error("Validation failed: {}", errorMessage);
-                    throw new NotFoundException(errorMessage);
-                }
-            }
-        }
-
 
         log.info("Film validation successful: {}", film.getName());
     }
@@ -162,7 +134,6 @@ public class FilmService {
         validateFilm(film);
         if (getFilm(film.getId()) == null) {
             String errorMessage = "Film with id " + film.getId() + " not found";
-            log.error("Cannot update film: {}", errorMessage);
             throw new NotFoundException(errorMessage);
         }
         return filmStorage.updateFilm(film);
