@@ -12,11 +12,11 @@ import java.util.List;
 public class RatingDbStorage extends BaseRepository<Rating> implements RatingStorage {
 
     private static final String FIND_ALL_QUERY = """
-            SELECT * FROM ratings;
+            SELECT rating_id, name FROM ratings;
             """;
 
     private static final String FIND_BY_ID_QUERY = """
-            SELECT * FROM ratings WHERE rating_id = ?
+            SELECT rating_id, name FROM ratings WHERE rating_id = ?
             """;
 
     @Autowired
